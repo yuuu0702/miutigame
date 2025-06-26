@@ -76,20 +76,43 @@ class SlotMachineWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.grey, width: 2),
             ),
-            child: Center(
-              child: Text(
-                gameState.isSpinning[reelIndex] 
-                    ? '?' 
-                    : gameState.reels[reelIndex][gameState.currentPositions[reelIndex]],
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: gameState.reels[reelIndex][gameState.currentPositions[reelIndex]] == 'GOD' 
-                      ? AppColors.gold 
-                      : Colors.black,
-                ),
-              ),
-            ),
+            child: gameState.isSpinning[reelIndex]
+                ? const Center(
+                    child: Text(
+                      '?',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  )
+                : Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: gameState.reels[reelIndex][gameState.currentPositions[reelIndex]] == 'assets/nao6.png'
+                          ? Border.all(color: AppColors.gold, width: 3)
+                          : null,
+                      boxShadow: gameState.reels[reelIndex][gameState.currentPositions[reelIndex]] == 'assets/nao6.png'
+                          ? [
+                              BoxShadow(
+                                color: AppColors.gold.withValues(alpha: 0.5),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.asset(
+                        gameState.reels[reelIndex][gameState.currentPositions[reelIndex]],
+                        fit: BoxFit.cover,
+                        width: 76,
+                        height: 96,
+                      ),
+                    ),
+                  ),
           ),
         );
       },

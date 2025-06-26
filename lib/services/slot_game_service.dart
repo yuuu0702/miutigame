@@ -7,7 +7,9 @@ class SlotGameService {
   }
   
   static bool isGodMatch(List<String> symbols) {
-    return symbols[0] == 'GOD' && symbols[1] == 'GOD' && symbols[2] == 'GOD';
+    return symbols[0] == AppConstants.godSymbol && 
+           symbols[1] == AppConstants.godSymbol && 
+           symbols[2] == AppConstants.godSymbol;
   }
   
   static bool isRegularMatch(List<String> symbols) {
@@ -15,7 +17,7 @@ class SlotGameService {
   }
   
   static bool isGodReach(List<String> symbols) {
-    return symbols.where((s) => s == 'GOD').length == 2;
+    return symbols.where((s) => s == AppConstants.godSymbol).length == 2;
   }
   
   static List<int> generateRandomPositions(List<List<String>> reels) {

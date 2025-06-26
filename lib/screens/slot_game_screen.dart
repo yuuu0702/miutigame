@@ -8,7 +8,7 @@ import '../widgets/slot_machine_widget.dart';
 import '../widgets/slot_control_panel.dart';
 import '../widgets/slot_info_panel.dart';
 import '../widgets/explosion_effect.dart';
-import '../widgets/god_effect.dart';
+import '../widgets/god_effect.dart';\nimport '../widgets/cutin_effect.dart';\nimport '../widgets/god_cutin_effect.dart';
 
 class SlotGameScreen extends StatefulWidget {
   const SlotGameScreen({super.key});
@@ -27,6 +27,10 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   AnimationController? godEffectController;
   Animation<double>? explosionAnimation;
   Animation<double>? godEffectAnimation;
+  
+  bool showCutin = false;
+  bool showGodCutin = false;
+  String? cutinImagePath;
   
   @override
   void initState() {
@@ -162,11 +166,6 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       });
       _triggerWinEffect();
     } else if (SlotGameService.isGodReach(symbols)) {
-      setState(() {
-        gameState = gameState.copyWith(
-          message: 'GODリーチ！惜しい！',
-        );
-      });
       _triggerReachEffect();
     } else {
       setState(() {
@@ -178,28 +177,40 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   }
   
   void _triggerGodMode() {
+    // カットイン演出を先に表示
     setState(() {
-      gameState = gameState.copyWith(
-        isGodMode: true,
-        credits: gameState.credits + (gameState.bet * AppConstants.godMultiplier),
-        message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
-        showExplosion: true,
-      );
+      showGodCutin = true;
+      cutinImagePath = AppConstants.godSymbol;
     });
     
-    explosionController!.forward();
-    godEffectController!.repeat();
-    
-    Future.delayed(const Duration(seconds: 5), () {
+    // カットイン演出完了後にGODモード開始
+    Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
+          showGodCutin = false;
           gameState = gameState.copyWith(
-            showExplosion: false,
-            isGodMode: false,
+            isGodMode: true,
+            credits: gameState.credits + (gameState.bet * AppConstants.godMultiplier),
+            message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
+            showExplosion: true,
           );
         });
-        godEffectController!.stop();
-        godEffectController!.reset();
+        
+        explosionController!.forward();
+        godEffectController!.repeat();
+        
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            setState(() {
+              gameState = gameState.copyWith(
+                showExplosion: false,
+                isGodMode: false,
+              );
+            });
+            godEffectController!.stop();
+            godEffectController!.reset();
+          }
+        });
       }
     });
   }
@@ -211,15 +222,36 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   }
   
   void _triggerReachEffect() {
-    for (int i = 0; i < 3; i++) {
-      Future.delayed(Duration(milliseconds: i * 200), () {
-        if (mounted) {
-          reelControllers[0].forward().then((_) {
-            reelControllers[0].reset();
+    // リーチ専用カットイン演出
+    final cutinImage = AppConstants.cutinImages[0]; // 最初のカットイン画像を使用
+    
+    setState(() {
+      showCutin = true;
+      cutinImagePath = cutinImage;
+    });
+    
+    // カットイン終了後にメッセージ更新
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          showCutin = false;
+          gameState = gameState.copyWith(
+            message: 'GODリーチ！惜しい！次に期待！',
+          );
+        });
+        
+        // リール振動エフェクト
+        for (int i = 0; i < 3; i++) {
+          Future.delayed(Duration(milliseconds: i * 200), () {
+            if (mounted) {
+              reelControllers[0].forward().then((_) {
+                reelControllers[0].reset();
+              });
+            }
           });
         }
-      });
-    }
+      }
+    });
   }
   
   void _adjustBet(bool increase) {
@@ -280,6 +312,26 @@ class _SlotGameScreenState extends State<SlotGameScreen>
               ExplosionEffect(animation: explosionAnimation!),
             if (gameState.isGodMode)
               GodEffect(animation: godEffectAnimation!),
+            if (showGodCutin && cutinImagePath != null)
+              GodCutinEffect(
+                imagePath: cutinImagePath!,
+                onComplete: () {
+                  setState(() {
+                    showGodCutin = false;
+                  });
+                },
+              ),
+            if (showCutin && cutinImagePath != null)
+              CutinEffect(
+                imagePath: cutinImagePath!,
+                text: 'リーチ！',
+                textColor: Colors.orange,
+                onComplete: () {
+                  setState(() {
+                    showCutin = false;
+                  });
+                },
+              ),
           ],
         ),
       ),
