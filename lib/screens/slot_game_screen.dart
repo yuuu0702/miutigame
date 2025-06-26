@@ -438,7 +438,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
         _triggerGodMode();
       } else {
         final multiplier = internalResult!.multiplier;
-        final win = gameState.bet * multiplier;
+        final win = (gameState.bet * multiplier).toInt();
         setState(() {
           gameState = gameState.copyWith(
             credits: gameState.credits + win,

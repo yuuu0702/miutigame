@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 
 class GodEffect extends StatelessWidget {
   final Animation<double> animation;

@@ -5,6 +5,10 @@ import '../constants/app_constants.dart';
 class InternalLotteryService {
   static final Random _random = Random();
   
+  SlotResult performLottery() {
+    return performInternalLottery();
+  }
+  
   // パチスロ風の内部抽選確率（分母65536）
   static const Map<SlotResultType, int> _probabilities = {
     SlotResultType.god: 256,        // 1/256 (約0.39%)
@@ -38,9 +42,10 @@ class InternalLotteryService {
           resultType: type,
           symbols: _generateGodSymbols(),
           payout: AppConstants.godMultiplier,
-          effectType: EffectType.god_mode,
+          effectType: EffectType.godMode,
           hasPreEffect: _shouldHavePreEffect(type),
           message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
+          multiplier: AppConstants.godMultiplier.toDouble(),
         );
         
       case SlotResultType.bigWin:
@@ -53,9 +58,11 @@ class InternalLotteryService {
           resultType: type,
           symbols: symbols,
           payout: multiplier,
-          effectType: EffectType.super_strong,
+          effectType: EffectType.superStrong,
           hasPreEffect: _shouldHavePreEffect(type),
-          message: '🔥 BIG WIN！！ ${multiplier}倍獲得！ 🔥',
+          message: '🔥 BIG WIN！！ $multiplier倍獲得！ 🔥',
+          multiplier: multiplier.toDouble(),
+          symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
         );
         
       case SlotResultType.mediumWin:
@@ -70,7 +77,9 @@ class InternalLotteryService {
           payout: multiplier,
           effectType: EffectType.strong,
           hasPreEffect: _shouldHavePreEffect(type),
-          message: '⭐ WIN！ ${multiplier}倍獲得！ ⭐',
+          message: '⭐ WIN！ $multiplier倍獲得！ ⭐',
+          multiplier: multiplier.toDouble(),
+          symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
         );
         
       case SlotResultType.smallWin:
@@ -85,17 +94,21 @@ class InternalLotteryService {
           payout: multiplier,
           effectType: EffectType.normal,
           hasPreEffect: false,
-          message: '✨ 小当たり！ ${multiplier}倍獲得！ ✨',
+          message: '✨ 小当たり！ $multiplier倍獲得！ ✨',
+          multiplier: multiplier.toDouble(),
+          symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
         );
         
       case SlotResultType.reach:
+        final symbols = _generateReachSymbols();
         return SlotResult(
           resultType: type,
-          symbols: _generateReachSymbols(),
+          symbols: symbols,
           payout: 0,
           effectType: EffectType.strong,
           hasPreEffect: _shouldHavePreEffect(type),
           message: 'GODリーチ！惜しい！次に期待！',
+          symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
         );
         
       case SlotResultType.hazure:
@@ -178,13 +191,13 @@ class InternalLotteryService {
   // 演出の強さに応じたリール停止タイミング調整
   static List<Duration> getReelStopTimings(EffectType effectType) {
     switch (effectType) {
-      case EffectType.god_mode:
+      case EffectType.godMode:
         return [
           const Duration(milliseconds: 1500),
           const Duration(milliseconds: 3000),
           const Duration(milliseconds: 5000), // 超ロングフリーズ
         ];
-      case EffectType.super_strong:
+      case EffectType.superStrong:
         return [
           const Duration(milliseconds: 1200),
           const Duration(milliseconds: 2400),

@@ -11,8 +11,8 @@ enum EffectType {
   none,
   normal,
   strong,
-  super_strong,
-  god_mode,
+  superStrong,
+  godMode,
 }
 
 class SlotResult {
@@ -20,8 +20,10 @@ class SlotResult {
   final List<String> symbols;
   final int payout;
   final EffectType effectType;
-  final bool hasPreEffect;  // 予告演出の有無
+  final bool hasPreEffect;
   final String message;
+  final int? symbolIndex;
+  final double multiplier;
   
   const SlotResult({
     required this.resultType,
@@ -30,5 +32,15 @@ class SlotResult {
     required this.effectType,
     this.hasPreEffect = false,
     required this.message,
+    this.symbolIndex,
+    this.multiplier = 1.0,
   });
+
+  bool get isWin => resultType != SlotResultType.hazure && resultType != SlotResultType.reach;
+  
+  bool get shouldShowPreEffect => hasPreEffect || effectType == EffectType.superStrong || effectType == EffectType.godMode;
+  
+  bool get shouldShowFreeze => effectType == EffectType.godMode || (effectType == EffectType.superStrong && isWin);
+  
+  bool get shouldShowReach => resultType == SlotResultType.reach;
 }

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
-import '../constants/app_colors.dart';
 
 class PreEffectWidget extends StatefulWidget {
   final VoidCallback? onComplete;
