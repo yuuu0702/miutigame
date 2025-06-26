@@ -75,12 +75,11 @@ class SlotMachineWidget extends StatelessWidget {
               offset: Offset(
                 0,
                 gameState.isSpinning[reelIndex]
-                    ? -reelAnimations[reelIndex].value * 1000 // より速い回転
+                    ? -reelAnimations[reelIndex].value *
+                          2000 // 上から下へより高速回転
                     : 0,
               ),
-              child: Column(
-                children: _buildReelSymbols(reelIndex),
-              ),
+              child: Column(children: _buildReelSymbols(reelIndex)),
             );
           },
         ),
@@ -95,7 +94,8 @@ class SlotMachineWidget extends StatelessWidget {
 
     // スピン中は複数の図柄を高速で表示
     if (gameState.isSpinning[reelIndex]) {
-      for (int i = 0; i < 10; i++) { // 10個の図柄を循環表示
+      for (int i = 0; i < 10; i++) {
+        // 10個の図柄を循環表示
         final symbolIndex = (currentPos + i) % symbols.length;
         symbolWidgets.add(_buildSymbolWidget(symbols[symbolIndex], false));
       }
@@ -113,7 +113,7 @@ class SlotMachineWidget extends StatelessWidget {
 
   Widget _buildSymbolWidget(String symbolPath, bool isCenter) {
     final isGodSymbol = symbolPath == 'assets/god.png';
-    
+
     return Container(
       width: 76,
       height: 80,
