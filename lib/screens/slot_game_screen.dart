@@ -66,6 +66,9 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       isSpinning: [false, false, false],
       credits: AppConstants.initialCredits,
       bet: AppConstants.initialBet,
+      isAutoMode: false,
+      autoSpinsRemaining: 0,
+      autoSpinCount: 0,
     );
   }
 
@@ -114,7 +117,8 @@ class _SlotGameScreenState extends State<SlotGameScreen>
 
   Future<void> _spin() async {
     if (gameState.isSpinning.any((spinning) => spinning) ||
-        gameState.credits < gameState.bet) {
+        gameState.credits < gameState.bet ||
+        gameState.isAutoMode) {
       return;
     }
 
@@ -282,14 +286,18 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   }
 
   void _startAutoMode() {
+    print('_startAutoMode called - isAutoMode: ${gameState.isAutoMode}, credits: ${gameState.credits}, bet: ${gameState.bet}');
+    
     if (gameState.isAutoMode || gameState.credits < gameState.bet) {
+      print('Auto mode already active or insufficient credits');
       return;
     }
 
     setState(() {
       gameState = gameState.copyWith(isAutoMode: true);
     });
-
+    
+    print('Auto mode started - isAutoMode: ${gameState.isAutoMode}');
     _scheduleNextAutoSpin();
   }
 
@@ -305,14 +313,21 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   }
 
   void _scheduleNextAutoSpin() {
+    print('_scheduleNextAutoSpin called - isAutoMode: ${gameState.isAutoMode}');
+    
     if (!gameState.isAutoMode || gameState.credits < gameState.bet) {
+      print('Stopping auto mode - isAutoMode: ${gameState.isAutoMode}, credits: ${gameState.credits}');
       _stopAutoMode();
       return;
     }
 
+    print('Scheduling next auto spin in 2 seconds');
     autoTimer = Timer(const Duration(milliseconds: 2000), () {
       if (mounted && gameState.isAutoMode) {
+        print('Executing auto spin');
         _performInternalLotterySpin();
+      } else {
+        print('Skipping auto spin - mounted: $mounted, isAutoMode: ${gameState.isAutoMode}');
       }
     });
   }
@@ -491,7 +506,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
                   onAutoStart: _startAutoMode,
                   onAutoStop: _stopAutoMode,
                   isAutoMode: gameState.isAutoMode,
-                  canSpin: !gameState.isSpinning.any((s) => s) && gameState.credits >= gameState.bet,
+                  canSpin: !gameState.isSpinning.any((s) => s) && gameState.credits >= gameState.bet && !gameState.isAutoMode,
                 ),
               ],
             ),

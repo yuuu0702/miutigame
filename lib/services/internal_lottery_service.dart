@@ -50,8 +50,8 @@ class InternalLotteryService {
         
       case SlotResultType.bigWin:
         final symbols = _generateMatchingSymbols([
-          'assets/nao7.png',
-          'assets/nao8.png'
+          'assets/nao1.png',
+          'assets/nao2.png'
         ]);
         final multiplier = AppConstants.symbolMultipliers[symbols[0]] ?? 50;
         return SlotResult(
@@ -67,8 +67,8 @@ class InternalLotteryService {
         
       case SlotResultType.mediumWin:
         final symbols = _generateMatchingSymbols([
-          'assets/nao9.png',
-          'assets/nao10.png'
+          'assets/nao3.png',
+          'assets/nao4.png'
         ]);
         final multiplier = AppConstants.symbolMultipliers[symbols[0]] ?? 20;
         return SlotResult(
@@ -84,8 +84,8 @@ class InternalLotteryService {
         
       case SlotResultType.smallWin:
         final symbols = _generateMatchingSymbols([
-          'assets/nao11.jpg',
-          'assets/nao12.jpg'
+          'assets/nao5.png',
+          'assets/naoki.png'
         ]);
         final multiplier = AppConstants.symbolMultipliers[symbols[0]] ?? 5;
         return SlotResult(
