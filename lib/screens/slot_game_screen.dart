@@ -8,7 +8,14 @@ import '../widgets/slot_machine_widget.dart';
 import '../widgets/slot_control_panel.dart';
 import '../widgets/slot_info_panel.dart';
 import '../widgets/explosion_effect.dart';
-import '../widgets/god_effect.dart';\nimport '../widgets/cutin_effect.dart';\nimport '../widgets/god_cutin_effect.dart';
+import '../widgets/god_effect.dart';
+import '../widgets/cutin_effect.dart';
+import '../widgets/god_cutin_effect.dart';
+import '../widgets/pre_effect_widget.dart';
+import '../widgets/reel_flash_effect.dart';
+import '../widgets/freeze_effect.dart';
+import '../models/slot_result.dart';
+import '../services/internal_lottery_service.dart';
 
 class SlotGameScreen extends StatefulWidget {
   const SlotGameScreen({super.key});
@@ -22,23 +29,32 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   late SlotGameState gameState;
   List<AnimationController> reelControllers = [];
   List<Animation<double>> reelAnimations = [];
-  
+
   AnimationController? explosionController;
   AnimationController? godEffectController;
   Animation<double>? explosionAnimation;
   Animation<double>? godEffectAnimation;
-  
+
   bool showCutin = false;
   bool showGodCutin = false;
   String? cutinImagePath;
-  
+
+  // オート機能
+  Timer? autoTimer;
+
+  // 演出関連
+  bool showPreEffect = false;
+  bool showReelFlash = false;
+  bool showFreeze = false;
+  SlotResult? internalResult;
+
   @override
   void initState() {
     super.initState();
     _initializeGame();
     _initializeAnimations();
   }
-  
+
   void _initializeGame() {
     gameState = SlotGameState(
       reels: [
@@ -52,7 +68,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       bet: AppConstants.initialBet,
     );
   }
-  
+
   void _initializeAnimations() {
     for (int i = 0; i < 3; i++) {
       final controller = AnimationController(
@@ -62,56 +78,46 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       final animation = Tween<double>(
         begin: 0.0,
         end: 1.0,
-      ).animate(CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOut,
-      ));
-      
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+
       reelControllers.add(controller);
       reelAnimations.add(animation);
     }
-    
+
     explosionController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    explosionAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: explosionController!,
-      curve: Curves.elasticOut,
-    ));
-    
+    explosionAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: explosionController!, curve: Curves.elasticOut),
+    );
+
     godEffectController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
     );
-    godEffectAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: godEffectController!,
-      curve: Curves.easeInOut,
-    ));
+    godEffectAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: godEffectController!, curve: Curves.easeInOut),
+    );
   }
-  
+
   @override
   void dispose() {
     for (var controller in reelControllers) {
       controller.dispose();
     }
     explosionController?.dispose();
+    autoTimer?.cancel();
     godEffectController?.dispose();
     super.dispose();
   }
-  
+
   Future<void> _spin() async {
-    if (gameState.isSpinning.any((spinning) => spinning) || 
+    if (gameState.isSpinning.any((spinning) => spinning) ||
         gameState.credits < gameState.bet) {
       return;
     }
-    
+
     setState(() {
       gameState = gameState.copyWith(
         credits: gameState.credits - gameState.bet,
@@ -121,38 +127,40 @@ class _SlotGameScreenState extends State<SlotGameScreen>
         isGodMode: false,
       );
     });
-    
+
     for (int i = 0; i < 3; i++) {
       reelControllers[i].reset();
       reelControllers[i].forward();
-      
+
       Future.delayed(Duration(milliseconds: 1000 + (i * 200)), () {
         final newPositions = [...gameState.currentPositions];
-        newPositions[i] = SlotGameService.generateRandomPositions([gameState.reels[i]])[0];
-        
+        newPositions[i] = SlotGameService.generateRandomPositions([
+          gameState.reels[i],
+        ])[0];
+
         final newIsSpinning = [...gameState.isSpinning];
         newIsSpinning[i] = false;
-        
+
         setState(() {
           gameState = gameState.copyWith(
             currentPositions: newPositions,
             isSpinning: newIsSpinning,
           );
         });
-        
+
         if (i == 2) {
           _checkResult();
         }
       });
     }
   }
-  
+
   void _checkResult() {
     final symbols = SlotGameService.getSymbolsFromPositions(
-      gameState.reels, 
-      gameState.currentPositions
+      gameState.reels,
+      gameState.currentPositions,
     );
-    
+
     if (SlotGameService.isGodMatch(symbols)) {
       _triggerGodMode();
     } else if (SlotGameService.isRegularMatch(symbols)) {
@@ -169,20 +177,18 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       _triggerReachEffect();
     } else {
       setState(() {
-        gameState = gameState.copyWith(
-          message: 'ハズレ... もう一度！',
-        );
+        gameState = gameState.copyWith(message: 'ハズレ... もう一度！');
       });
     }
   }
-  
+
   void _triggerGodMode() {
     // カットイン演出を先に表示
     setState(() {
       showGodCutin = true;
       cutinImagePath = AppConstants.godSymbol;
     });
-    
+
     // カットイン演出完了後にGODモード開始
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
@@ -190,15 +196,17 @@ class _SlotGameScreenState extends State<SlotGameScreen>
           showGodCutin = false;
           gameState = gameState.copyWith(
             isGodMode: true,
-            credits: gameState.credits + (gameState.bet * AppConstants.godMultiplier),
+            credits:
+                gameState.credits +
+                (gameState.bet * AppConstants.godMultiplier),
             message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
             showExplosion: true,
           );
         });
-        
+
         explosionController!.forward();
         godEffectController!.repeat();
-        
+
         Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
             setState(() {
@@ -214,32 +222,30 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       }
     });
   }
-  
+
   void _triggerWinEffect() {
     explosionController!.forward().then((_) {
       explosionController!.reset();
     });
   }
-  
+
   void _triggerReachEffect() {
     // リーチ専用カットイン演出
     final cutinImage = AppConstants.cutinImages[0]; // 最初のカットイン画像を使用
-    
+
     setState(() {
       showCutin = true;
       cutinImagePath = cutinImage;
     });
-    
+
     // カットイン終了後にメッセージ更新
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
           showCutin = false;
-          gameState = gameState.copyWith(
-            message: 'GODリーチ！惜しい！次に期待！',
-          );
+          gameState = gameState.copyWith(message: 'GODリーチ！惜しい！次に期待！');
         });
-        
+
         // リール振動エフェクト
         for (int i = 0; i < 3; i++) {
           Future.delayed(Duration(milliseconds: i * 200), () {
@@ -253,10 +259,10 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       }
     });
   }
-  
+
   void _adjustBet(bool increase) {
     if (increase) {
-      if (gameState.bet < AppConstants.maxBet && 
+      if (gameState.bet < AppConstants.maxBet &&
           gameState.credits >= gameState.bet + AppConstants.betIncrement) {
         setState(() {
           gameState = gameState.copyWith(
@@ -274,7 +280,185 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       }
     }
   }
-  
+
+  void _startAutoMode() {
+    if (gameState.isAutoMode || gameState.credits < gameState.bet) {
+      return;
+    }
+
+    setState(() {
+      gameState = gameState.copyWith(isAutoMode: true);
+    });
+
+    _scheduleNextAutoSpin();
+  }
+
+  void _stopAutoMode() {
+    if (!gameState.isAutoMode) {
+      return;
+    }
+
+    autoTimer?.cancel();
+    setState(() {
+      gameState = gameState.copyWith(isAutoMode: false);
+    });
+  }
+
+  void _scheduleNextAutoSpin() {
+    if (!gameState.isAutoMode || gameState.credits < gameState.bet) {
+      _stopAutoMode();
+      return;
+    }
+
+    autoTimer = Timer(const Duration(milliseconds: 2000), () {
+      if (mounted && gameState.isAutoMode) {
+        _performInternalLotterySpin();
+      }
+    });
+  }
+
+  Future<void> _performInternalLotterySpin() async {
+    if (gameState.isSpinning.any((spinning) => spinning) ||
+        gameState.credits < gameState.bet) {
+      return;
+    }
+
+    // 内部抽選を実行
+    final lotteryService = InternalLotteryService();
+    internalResult = lotteryService.performLottery();
+
+    // 演出の表示
+    await _showPreEffects();
+
+    // スピン実行
+    await _executeSpinWithResult();
+
+    // 次のオートスピンをスケジュール
+    if (gameState.isAutoMode) {
+      _scheduleNextAutoSpin();
+    }
+  }
+
+  Future<void> _showPreEffects() async {
+    if (internalResult == null) return;
+
+    // 激アツ予告の表示
+    if (internalResult!.shouldShowPreEffect) {
+      setState(() {
+        showPreEffect = true;
+      });
+
+      await Future.delayed(const Duration(seconds: 3));
+
+      setState(() {
+        showPreEffect = false;
+      });
+    }
+
+    // フリーズ演出
+    if (internalResult!.shouldShowFreeze) {
+      setState(() {
+        showFreeze = true;
+      });
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      setState(() {
+        showFreeze = false;
+      });
+    }
+  }
+
+  Future<void> _executeSpinWithResult() async {
+    setState(() {
+      gameState = gameState.copyWith(
+        credits: gameState.credits - gameState.bet,
+        message: 'スピン中...',
+        isSpinning: [true, true, true],
+        showExplosion: false,
+        isGodMode: false,
+      );
+    });
+
+    // 内部抽選結果に基づいてリール停止位置を決定
+    List<int> targetPositions;
+    if (internalResult!.isWin) {
+      if (internalResult!.resultType == SlotResultType.god) {
+        // GOD揃いの位置を設定
+        final godIndex = AppConstants.slotSymbols.indexOf(AppConstants.godSymbol);
+        targetPositions = [godIndex, godIndex, godIndex];
+      } else {
+        // 通常当たりの位置を設定
+        final symbols = AppConstants.slotSymbols;
+        final winSymbol = symbols[internalResult!.symbolIndex ?? 0];
+        final winIndex = symbols.indexOf(winSymbol);
+        targetPositions = [winIndex, winIndex, winIndex];
+      }
+    } else if (internalResult!.shouldShowReach) {
+      // リーチ演出
+      final reachSymbol = AppConstants.slotSymbols[internalResult!.symbolIndex ?? 0];
+      final reachIndex = AppConstants.slotSymbols.indexOf(reachSymbol);
+      targetPositions = [reachIndex, reachIndex, (reachIndex + 1) % AppConstants.slotSymbols.length];
+    } else {
+      // ハズレ
+      targetPositions = SlotGameService.generateRandomPositions(gameState.reels);
+    }
+
+    // リールアニメーション実行
+    for (int i = 0; i < 3; i++) {
+      reelControllers[i].reset();
+      reelControllers[i].forward();
+
+      Future.delayed(Duration(milliseconds: 1000 + (i * 200)), () {
+        final newPositions = [...gameState.currentPositions];
+        newPositions[i] = targetPositions[i];
+
+        final newIsSpinning = [...gameState.isSpinning];
+        newIsSpinning[i] = false;
+
+        setState(() {
+          gameState = gameState.copyWith(
+            currentPositions: newPositions,
+            isSpinning: newIsSpinning,
+          );
+        });
+
+        if (i == 2) {
+          _processInternalResult();
+        }
+      });
+    }
+  }
+
+  void _processInternalResult() {
+    if (internalResult == null) return;
+
+    if (internalResult!.isWin) {
+      if (internalResult!.resultType == SlotResultType.god) {
+        _triggerGodMode();
+      } else {
+        final multiplier = internalResult!.multiplier;
+        final win = gameState.bet * multiplier;
+        setState(() {
+          gameState = gameState.copyWith(
+            credits: gameState.credits + win,
+            message: '当たり！ $win枚獲得！',
+          );
+        });
+        _triggerWinEffect();
+      }
+    } else if (internalResult!.shouldShowReach) {
+      _triggerReachEffect();
+    } else {
+      setState(() {
+        gameState = gameState.copyWith(message: 'ハズレ... もう一度！');
+      });
+    }
+
+    // 内部抽選結果をリセット
+    internalResult = null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -284,15 +468,14 @@ class _SlotGameScreenState extends State<SlotGameScreen>
         foregroundColor: Colors.white,
       ),
       body: Container(
-        decoration: const BoxDecoration(gradient: AppColors.slotMachineGradient),
+        decoration: const BoxDecoration(
+          gradient: AppColors.slotMachineGradient,
+        ),
         child: Stack(
           children: [
             Column(
               children: [
-                SlotInfoPanel(
-                  credits: gameState.credits,
-                  bet: gameState.bet,
-                ),
+                SlotInfoPanel(credits: gameState.credits, bet: gameState.bet),
                 Expanded(
                   child: Center(
                     child: SlotMachineWidget(
@@ -305,13 +488,16 @@ class _SlotGameScreenState extends State<SlotGameScreen>
                   onSpin: _spin,
                   onBetDecrease: () => _adjustBet(false),
                   onBetIncrease: () => _adjustBet(true),
+                  onAutoStart: _startAutoMode,
+                  onAutoStop: _stopAutoMode,
+                  isAutoMode: gameState.isAutoMode,
+                  canSpin: !gameState.isSpinning.any((s) => s) && gameState.credits >= gameState.bet,
                 ),
               ],
             ),
             if (gameState.showExplosion)
               ExplosionEffect(animation: explosionAnimation!),
-            if (gameState.isGodMode)
-              GodEffect(animation: godEffectAnimation!),
+            if (gameState.isGodMode) GodEffect(animation: godEffectAnimation!),
             if (showGodCutin && cutinImagePath != null)
               GodCutinEffect(
                 imagePath: cutinImagePath!,
@@ -329,6 +515,32 @@ class _SlotGameScreenState extends State<SlotGameScreen>
                 onComplete: () {
                   setState(() {
                     showCutin = false;
+                  });
+                },
+              ),
+            if (showPreEffect)
+              PreEffectWidget(
+                onComplete: () {
+                  setState(() {
+                    showPreEffect = false;
+                  });
+                },
+              ),
+            if (showFreeze)
+              FreezeEffect(
+                duration: const Duration(seconds: 2),
+                onComplete: () {
+                  setState(() {
+                    showFreeze = false;
+                  });
+                },
+              ),
+            if (showReelFlash)
+              ReelFlashEffect(
+                reelIndex: 0,
+                onComplete: () {
+                  setState(() {
+                    showReelFlash = false;
                   });
                 },
               ),

@@ -1,3 +1,5 @@
+import 'slot_result.dart';
+
 class SlotGameState {
   final List<List<String>> reels;
   final List<int> currentPositions;
@@ -8,6 +10,17 @@ class SlotGameState {
   final int bet;
   final String message;
   
+  // オート機能関連
+  final bool isAutoMode;
+  final int autoSpinsRemaining;
+  final int autoSpinCount;
+  
+  // 演出関連
+  final bool showPreEffect;
+  final bool showReelFlash;
+  final SlotResult? currentResult;
+  final bool hasInternalResult; // 内部抽選結果があるかどうか
+  
   const SlotGameState({
     required this.reels,
     required this.currentPositions,
@@ -17,6 +30,13 @@ class SlotGameState {
     this.credits = 1000,
     this.bet = 10,
     this.message = 'レバーを引いてゲーム開始！',
+    this.isAutoMode = false,
+    this.autoSpinsRemaining = 0,
+    this.autoSpinCount = 0,
+    this.showPreEffect = false,
+    this.showReelFlash = false,
+    this.currentResult,
+    this.hasInternalResult = false,
   });
   
   SlotGameState copyWith({
@@ -28,6 +48,13 @@ class SlotGameState {
     int? credits,
     int? bet,
     String? message,
+    bool? isAutoMode,
+    int? autoSpinsRemaining,
+    int? autoSpinCount,
+    bool? showPreEffect,
+    bool? showReelFlash,
+    SlotResult? currentResult,
+    bool? hasInternalResult,
   }) {
     return SlotGameState(
       reels: reels ?? this.reels,
@@ -38,6 +65,13 @@ class SlotGameState {
       credits: credits ?? this.credits,
       bet: bet ?? this.bet,
       message: message ?? this.message,
+      isAutoMode: isAutoMode ?? this.isAutoMode,
+      autoSpinsRemaining: autoSpinsRemaining ?? this.autoSpinsRemaining,
+      autoSpinCount: autoSpinCount ?? this.autoSpinCount,
+      showPreEffect: showPreEffect ?? this.showPreEffect,
+      showReelFlash: showReelFlash ?? this.showReelFlash,
+      currentResult: currentResult ?? this.currentResult,
+      hasInternalResult: hasInternalResult ?? this.hasInternalResult,
     );
   }
 }
