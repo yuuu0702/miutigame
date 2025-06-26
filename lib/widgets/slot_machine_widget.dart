@@ -58,64 +58,89 @@ class SlotMachineWidget extends StatelessWidget {
   }
 
   Widget _buildReel(int reelIndex) {
-    return AnimatedBuilder(
-      animation: reelAnimations[reelIndex],
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(
-            0, 
-            gameState.isSpinning[reelIndex] 
-                ? -reelAnimations[reelIndex].value * 200 
-                : 0
-          ),
-          child: Container(
-            width: 80,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey, width: 2),
-            ),
-            child: gameState.isSpinning[reelIndex]
-                ? const Center(
-                    child: Text(
-                      '?',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  )
-                : Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: gameState.reels[reelIndex][gameState.currentPositions[reelIndex]] == 'assets/nao6.png'
-                          ? Border.all(color: AppColors.gold, width: 3)
-                          : null,
-                      boxShadow: gameState.reels[reelIndex][gameState.currentPositions[reelIndex]] == 'assets/nao6.png'
-                          ? [
-                              BoxShadow(
-                                color: AppColors.gold.withValues(alpha: 0.5),
-                                blurRadius: 10,
-                                spreadRadius: 2,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.asset(
-                        gameState.reels[reelIndex][gameState.currentPositions[reelIndex]],
-                        fit: BoxFit.cover,
-                        width: 76,
-                        height: 96,
-                      ),
-                    ),
-                  ),
-          ),
-        );
-      },
+    return Container(
+      width: 80,
+      height: 240, // 3つの図柄を表示するために高さを拡大
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.gold, width: 2),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedBuilder(
+          animation: reelAnimations[reelIndex],
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(
+                0,
+                gameState.isSpinning[reelIndex]
+                    ? -reelAnimations[reelIndex].value * 1000 // より速い回転
+                    : 0,
+              ),
+              child: Column(
+                children: _buildReelSymbols(reelIndex),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildReelSymbols(int reelIndex) {
+    final symbols = gameState.reels[reelIndex];
+    final currentPos = gameState.currentPositions[reelIndex];
+    List<Widget> symbolWidgets = [];
+
+    // スピン中は複数の図柄を高速で表示
+    if (gameState.isSpinning[reelIndex]) {
+      for (int i = 0; i < 10; i++) { // 10個の図柄を循環表示
+        final symbolIndex = (currentPos + i) % symbols.length;
+        symbolWidgets.add(_buildSymbolWidget(symbols[symbolIndex], false));
+      }
+    } else {
+      // 停止時は上下の図柄も表示（日本のスロット風）
+      for (int i = -1; i <= 1; i++) {
+        final symbolIndex = (currentPos + i + symbols.length) % symbols.length;
+        final isCenter = i == 0;
+        symbolWidgets.add(_buildSymbolWidget(symbols[symbolIndex], isCenter));
+      }
+    }
+
+    return symbolWidgets;
+  }
+
+  Widget _buildSymbolWidget(String symbolPath, bool isCenter) {
+    final isGodSymbol = symbolPath == 'assets/god.png';
+    
+    return Container(
+      width: 76,
+      height: 80,
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: isCenter && isGodSymbol
+            ? Border.all(color: AppColors.gold, width: 3)
+            : null,
+        boxShadow: isCenter && isGodSymbol
+            ? [
+                BoxShadow(
+                  color: AppColors.gold.withValues(alpha: 0.5),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.asset(
+          symbolPath,
+          fit: BoxFit.cover,
+          opacity: isCenter ? null : const AlwaysStoppedAnimation(0.6),
+        ),
+      ),
     );
   }
 }

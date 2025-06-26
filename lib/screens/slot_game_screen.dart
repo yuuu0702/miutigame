@@ -76,13 +76,16 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   void _initializeAnimations() {
     for (int i = 0; i < 3; i++) {
       final controller = AnimationController(
-        duration: Duration(milliseconds: 1000 + (i * 200)),
+        duration: Duration(milliseconds: 4500 + (i * 500)), // より長いスピン時間
         vsync: this,
       );
       final animation = Tween<double>(
         begin: 0.0,
         end: 1.0,
-      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+      ).animate(CurvedAnimation(
+        parent: controller, 
+        curve: Curves.easeOut,
+      ));
 
       reelControllers.add(controller);
       reelAnimations.add(animation);
@@ -411,10 +414,9 @@ class _SlotGameScreenState extends State<SlotGameScreen>
         targetPositions = [winIndex, winIndex, winIndex];
       }
     } else if (internalResult!.shouldShowReach) {
-      // リーチ演出
-      final reachSymbol = AppConstants.slotSymbols[internalResult!.symbolIndex ?? 0];
-      final reachIndex = AppConstants.slotSymbols.indexOf(reachSymbol);
-      targetPositions = [reachIndex, reachIndex, (reachIndex + 1) % AppConstants.slotSymbols.length];
+      // リーチ演出: GODリーチを作る
+      final godIndex = AppConstants.slotSymbols.indexOf(AppConstants.godSymbol);
+      targetPositions = [godIndex, godIndex, (godIndex + 1) % AppConstants.slotSymbols.length];
     } else {
       // ハズレ
       targetPositions = SlotGameService.generateRandomPositions(gameState.reels);
@@ -425,7 +427,16 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       reelControllers[i].reset();
       reelControllers[i].forward();
 
-      Future.delayed(Duration(milliseconds: 1000 + (i * 200)), () {
+      int delay;
+      if (internalResult!.shouldShowReach) {
+        // リーチの場合：1番目、2番目は通常、3番目は長時間回転
+        delay = i < 2 ? 1000 + (i * 500) : 4000; // 3番目のリールは4秒後に停止
+      } else {
+        // 通常：順次停止
+        delay = 1000 + (i * 300);
+      }
+
+      Future.delayed(Duration(milliseconds: delay), () {
         final newPositions = [...gameState.currentPositions];
         newPositions[i] = targetPositions[i];
 
@@ -438,6 +449,13 @@ class _SlotGameScreenState extends State<SlotGameScreen>
             isSpinning: newIsSpinning,
           );
         });
+
+        // リーチ演出：2番目が停止した時点でリーチ状態を検出
+        if (internalResult!.shouldShowReach && i == 1) {
+          setState(() {
+            gameState = gameState.copyWith(message: 'GODリーチ！！！');
+          });
+        }
 
         if (i == 2) {
           _processInternalResult();
