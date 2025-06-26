@@ -25,27 +25,27 @@ class AppConstants {
   
   // スロット図柄（assetsの画像を使用）
   static const List<String> slotSymbols = [
-    'assets/nao6.png',      // GODシンボル（特別）
-    'assets/nao7.png',      // 高配当シンボル
-    'assets/nao8.png',      // 高配当シンボル
-    'assets/nao9.png',      // 中配当シンボル
-    'assets/nao10.png',     // 中配当シンボル
-    'assets/nao11.jpg',     // 低配当シンボル
-    'assets/nao12.jpg',     // 低配当シンボル
+    'assets/god.png',       // GODシンボル（特別）
+    'assets/nao1.png',      // 高配当シンボル
+    'assets/nao2.png',      // 高配当シンボル
+    'assets/nao3.png',      // 中配当シンボル
+    'assets/nao4.png',      // 中配当シンボル
+    'assets/nao5.png',      // 低配当シンボル
+    'assets/naoki.png',     // 低配当シンボル
   ];
   
   // GODシンボル専用
-  static const String godSymbol = 'assets/nao6.png';
+  static const String godSymbol = 'assets/god.png';
   
   static const Color goldColor = Color(0xFFFFD700);
   
   static const Map<String, int> symbolMultipliers = {
-    'assets/nao7.png': 100,   // 最高配当
-    'assets/nao8.png': 50,    // 高配当
-    'assets/nao9.png': 20,    // 中配当
-    'assets/nao10.png': 15,   // 中配当
-    'assets/nao11.jpg': 10,   // 低配当
-    'assets/nao12.jpg': 5,    // 最低配当
+    'assets/nao1.png': 100,   // 最高配当
+    'assets/nao2.png': 50,    // 高配当
+    'assets/nao3.png': 20,    // 中配当
+    'assets/nao4.png': 15,    // 中配当
+    'assets/nao5.png': 10,    // 低配当
+    'assets/naoki.png': 5,    // 最低配当
   };
   
   // カットイン用の画像
