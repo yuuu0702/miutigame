@@ -3,13 +3,11 @@ import 'dart:math';
 
 class FreezeEffect extends StatefulWidget {
   final Duration duration;
-  final String text;
   final VoidCallback? onComplete;
 
   const FreezeEffect({
     super.key,
     required this.duration,
-    this.text = 'フリーズ',
     this.onComplete,
   });
 
@@ -156,21 +154,7 @@ class _FreezeEffectState extends State<FreezeEffect>
                               ),
                             ],
                           ),
-                          child: Text(
-                            widget.text,
-                            style: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.lightBlue,
-                              shadows: [
-                                Shadow(
-                                  offset: Offset(2, 2),
-                                  blurRadius: 4,
-                                  color: Colors.black,
-                                ),
-                              ],
-                            ),
-                          ),
+                          child: Container(),
                         ),
                       );
                     },

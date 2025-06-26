@@ -118,21 +118,7 @@ class _PreEffectWidgetState extends State<PreEffectWidget>
                           ),
                         ],
                       ),
-                      child: const Text(
-                        '⚠️ 激アツ予告 ⚠️',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.yellow,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(2, 2),
-                              blurRadius: 4,
-                              color: Colors.black,
-                            ),
-                          ],
-                        ),
-                      ),
+                      child: Container(),
                     ),
                   );
                 },

@@ -46,6 +46,7 @@ class InternalLotteryService {
           hasPreEffect: _shouldHavePreEffect(type),
           message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
           multiplier: AppConstants.godMultiplier.toDouble(),
+          cutinImagePath: _getCutinImageForType(type),
         );
         
       case SlotResultType.bigWin:
@@ -63,6 +64,7 @@ class InternalLotteryService {
           message: '🔥 BIG WIN！！ $multiplier倍獲得！ 🔥',
           multiplier: multiplier.toDouble(),
           symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
+          cutinImagePath: _getCutinImageForType(type),
         );
         
       case SlotResultType.mediumWin:
@@ -80,6 +82,7 @@ class InternalLotteryService {
           message: '⭐ WIN！ $multiplier倍獲得！ ⭐',
           multiplier: multiplier.toDouble(),
           symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
+          cutinImagePath: _getCutinImageForType(type),
         );
         
       case SlotResultType.smallWin:
@@ -97,6 +100,7 @@ class InternalLotteryService {
           message: '✨ 小当たり！ $multiplier倍獲得！ ✨',
           multiplier: multiplier.toDouble(),
           symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
+          cutinImagePath: _getCutinImageForType(type),
         );
         
       case SlotResultType.reach:
@@ -109,6 +113,7 @@ class InternalLotteryService {
           hasPreEffect: _shouldHavePreEffect(type),
           message: 'GODリーチ！惜しい！次に期待！',
           symbolIndex: AppConstants.slotSymbols.indexOf(symbols[0]),
+          cutinImagePath: _getCutinImageForType(type),
         );
         
       case SlotResultType.hazure:
@@ -185,6 +190,24 @@ class InternalLotteryService {
         return _random.nextDouble() < 0.7; // 70%の確率で予告演出
       default:
         return false;
+    }
+  }
+  
+  // 当たる確率によってカットイン画像を選択
+  static String? _getCutinImageForType(SlotResultType type) {
+    switch (type) {
+      case SlotResultType.god:
+        return 'assets/saginaoki.jpg'; // 最高演出
+      case SlotResultType.bigWin:
+        return AppConstants.cutinImages[2]; // 3番目に熱い
+      case SlotResultType.mediumWin:
+        return AppConstants.cutinImages[1]; // 2番目に熱い
+      case SlotResultType.smallWin:
+        return AppConstants.cutinImages[0]; // 通常演出
+      case SlotResultType.reach:
+        return AppConstants.cutinImages[1]; // リーチは中程度の熱さ
+      case SlotResultType.hazure:
+        return null; // ハズレはカットインなし
     }
   }
   

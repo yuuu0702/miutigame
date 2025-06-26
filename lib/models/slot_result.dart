@@ -24,6 +24,7 @@ class SlotResult {
   final String message;
   final int? symbolIndex;
   final double multiplier;
+  final String? cutinImagePath;
   
   const SlotResult({
     required this.resultType,
@@ -34,6 +35,7 @@ class SlotResult {
     required this.message,
     this.symbolIndex,
     this.multiplier = 1.0,
+    this.cutinImagePath,
   });
 
   bool get isWin => resultType != SlotResultType.hazure && resultType != SlotResultType.reach;

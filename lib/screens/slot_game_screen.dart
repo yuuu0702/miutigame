@@ -41,6 +41,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
 
   // オート機能
   Timer? autoTimer;
+  bool isAutoPausedForCutin = false;
 
   // 演出関連
   bool showPreEffect = false;
@@ -448,30 +449,149 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   void _processInternalResult() {
     if (internalResult == null) return;
 
+    // カットイン演出がある場合、Autoを一時停止
+    if (internalResult!.cutinImagePath != null && gameState.isAutoMode) {
+      isAutoPausedForCutin = true;
+      autoTimer?.cancel();
+    }
+
     if (internalResult!.isWin) {
       if (internalResult!.resultType == SlotResultType.god) {
-        _triggerGodMode();
+        _triggerGodModeWithCutin();
       } else {
-        final multiplier = internalResult!.multiplier;
-        final win = (gameState.bet * multiplier).toInt();
-        setState(() {
-          gameState = gameState.copyWith(
-            credits: gameState.credits + win,
-            message: '当たり！ $win枚獲得！',
-          );
-        });
-        _triggerWinEffect();
+        _triggerWinWithCutin();
       }
     } else if (internalResult!.shouldShowReach) {
-      _triggerReachEffect();
+      _triggerReachWithCutin();
     } else {
       setState(() {
         gameState = gameState.copyWith(message: 'ハズレ... もう一度！');
       });
+      _resumeAutoIfNeeded();
     }
 
     // 内部抽選結果をリセット
     internalResult = null;
+  }
+
+  void _resumeAutoIfNeeded() {
+    if (isAutoPausedForCutin && gameState.isAutoMode) {
+      isAutoPausedForCutin = false;
+      _scheduleNextAutoSpin();
+    }
+  }
+
+  void _triggerGodModeWithCutin() {
+    if (internalResult?.cutinImagePath != null) {
+      setState(() {
+        showGodCutin = true;
+        cutinImagePath = internalResult!.cutinImagePath;
+      });
+
+      Future.delayed(const Duration(seconds: 4), () {
+        if (mounted) {
+          setState(() {
+            showGodCutin = false;
+            gameState = gameState.copyWith(
+              isGodMode: true,
+              credits: gameState.credits + (gameState.bet * AppConstants.godMultiplier),
+              message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
+              showExplosion: true,
+            );
+          });
+          
+          explosionController!.forward();
+          godEffectController!.repeat();
+
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              setState(() {
+                gameState = gameState.copyWith(
+                  showExplosion: false,
+                  isGodMode: false,
+                );
+              });
+              godEffectController!.stop();
+              godEffectController!.reset();
+              _resumeAutoIfNeeded();
+            }
+          });
+        }
+      });
+    } else {
+      _triggerGodMode();
+    }
+  }
+
+  void _triggerWinWithCutin() {
+    if (internalResult?.cutinImagePath != null) {
+      setState(() {
+        showCutin = true;
+        cutinImagePath = internalResult!.cutinImagePath;
+      });
+
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            showCutin = false;
+          });
+          
+          final multiplier = internalResult!.multiplier;
+          final win = (gameState.bet * multiplier).toInt();
+          setState(() {
+            gameState = gameState.copyWith(
+              credits: gameState.credits + win,
+              message: '当たり！ $win枚獲得！',
+            );
+          });
+          _triggerWinEffect();
+          _resumeAutoIfNeeded();
+        }
+      });
+    } else {
+      final multiplier = internalResult!.multiplier;
+      final win = (gameState.bet * multiplier).toInt();
+      setState(() {
+        gameState = gameState.copyWith(
+          credits: gameState.credits + win,
+          message: '当たり！ $win枚獲得！',
+        );
+      });
+      _triggerWinEffect();
+      _resumeAutoIfNeeded();
+    }
+  }
+
+  void _triggerReachWithCutin() {
+    if (internalResult?.cutinImagePath != null) {
+      setState(() {
+        showCutin = true;
+        cutinImagePath = internalResult!.cutinImagePath;
+      });
+
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            showCutin = false;
+            gameState = gameState.copyWith(message: 'GODリーチ！惜しい！次に期待！');
+          });
+
+          for (int i = 0; i < 3; i++) {
+            Future.delayed(Duration(milliseconds: i * 200), () {
+              if (mounted) {
+                reelControllers[0].forward().then((_) {
+                  reelControllers[0].reset();
+                });
+              }
+            });
+          }
+          _resumeAutoIfNeeded();
+        }
+      });
+    } else {
+      _triggerReachEffect();
+      _resumeAutoIfNeeded();
+    }
   }
 
   @override
@@ -525,8 +645,6 @@ class _SlotGameScreenState extends State<SlotGameScreen>
             if (showCutin && cutinImagePath != null)
               CutinEffect(
                 imagePath: cutinImagePath!,
-                text: 'リーチ！',
-                textColor: Colors.orange,
                 onComplete: () {
                   setState(() {
                     showCutin = false;

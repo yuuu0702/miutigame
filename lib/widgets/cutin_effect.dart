@@ -3,16 +3,12 @@ import 'dart:math';
 
 class CutinEffect extends StatefulWidget {
   final String imagePath;
-  final String text;
-  final Color textColor;
   final Duration duration;
   final VoidCallback? onComplete;
 
   const CutinEffect({
     super.key,
     required this.imagePath,
-    required this.text,
-    this.textColor = Colors.white,
     this.duration = const Duration(seconds: 3),
     this.onComplete,
   });
@@ -128,7 +124,7 @@ class _CutinEffectState extends State<CutinEffect>
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: widget.textColor.withValues(alpha: 0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           blurRadius: 30,
                           spreadRadius: 10,
                         ),
@@ -140,40 +136,6 @@ class _CutinEffectState extends State<CutinEffect>
                         widget.imagePath,
                         fit: BoxFit.cover,
                       ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            
-            // テキストオーバーレイ
-            Positioned(
-              bottom: 100,
-              left: 0,
-              right: 0,
-              child: FadeTransition(
-                opacity: fadeAnimation,
-                child: ScaleTransition(
-                  scale: scaleAnimation,
-                  child: Text(
-                    widget.text,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: widget.textColor,
-                      shadows: [
-                        Shadow(
-                          offset: const Offset(2, 2),
-                          blurRadius: 4,
-                          color: Colors.black.withValues(alpha: 0.8),
-                        ),
-                        Shadow(
-                          offset: const Offset(0, 0),
-                          blurRadius: 20,
-                          color: widget.textColor.withValues(alpha: 0.5),
-                        ),
-                      ],
                     ),
                   ),
                 ),

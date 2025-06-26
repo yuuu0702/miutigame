@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppConstants {
   static const String appTitle = 'ミウチゲーム';
-  
+
   static const List<String> imageAssets = [
     'assets/095dc733ec8058b707b700f23774ec9d.png',
     'assets/19e9a1cb6d20769c271dd718d31c8598.png',
@@ -22,41 +22,40 @@ class AppConstants {
     'assets/nao8.png',
     'assets/nao9.png',
   ];
-  
+
   // スロット図柄（assetsの画像を使用）
   static const List<String> slotSymbols = [
-    'assets/god.png',       // GODシンボル（特別）
-    'assets/nao1.png',      // 高配当シンボル
-    'assets/nao2.png',      // 高配当シンボル
-    'assets/nao3.png',      // 中配当シンボル
-    'assets/nao4.png',      // 中配当シンボル
-    'assets/nao5.png',      // 低配当シンボル
-    'assets/naoki.png',     // 低配当シンボル
+    'assets/god.png', // GODシンボル（特別）
+    'assets/nao1.png', // 高配当シンボル
+    'assets/nao2.png', // 高配当シンボル
+    'assets/nao3.png', // 中配当シンボル
+    'assets/nao4.png', // 中配当シンボル
+    'assets/nao5.png', // 低配当シンボル
+    'assets/naoki.png', // 低配当シンボル
   ];
-  
+
   // GODシンボル専用
   static const String godSymbol = 'assets/god.png';
-  
+
   static const Color goldColor = Color(0xFFFFD700);
-  
+
   static const Map<String, int> symbolMultipliers = {
-    'assets/nao1.png': 100,   // 最高配当
-    'assets/nao2.png': 50,    // 高配当
-    'assets/nao3.png': 20,    // 中配当
-    'assets/nao4.png': 15,    // 中配当
-    'assets/nao5.png': 10,    // 低配当
-    'assets/naoki.png': 5,    // 最低配当
+    'assets/nao1.png': 100, // 最高配当
+    'assets/nao2.png': 50, // 高配当
+    'assets/nao3.png': 20, // 中配当
+    'assets/nao4.png': 15, // 中配当
+    'assets/nao5.png': 10, // 低配当
+    'assets/naoki.png': 5, // 最低配当
   };
-  
+
   // カットイン用の画像
   static const List<String> cutinImages = [
-    'assets/disneyKMR.png',
-    'assets/095dc733ec8058b707b700f23774ec9d.png',
-    'assets/19e9a1cb6d20769c271dd718d31c8598.png',
-    'assets/451398ef90ef876ffb5bec6f5502b12d.png',
-    'assets/5Gfj5ATl.jpg',
+    'assets/nao11.png',
+    'assets/nao12.png',
+    'assets/nao7.png',
+    'assets/saginaoki.jpg',
   ];
-  
+
   static const int godMultiplier = 777;
   static const int initialCredits = 1000;
   static const int initialBet = 10;
