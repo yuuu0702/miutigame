@@ -50,8 +50,8 @@ class AppConstants {
 
   // カットイン用の画像
   static const List<String> cutinImages = [
-    'assets/nao11.png',
-    'assets/nao12.png',
+    'assets/nao11.jpg',
+    'assets/nao12.jpg', 
     'assets/nao7.png',
     'assets/saginaoki.jpg',
   ];
