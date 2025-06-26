@@ -160,7 +160,7 @@ class _CutinEffectState extends State<CutinEffect>
               center: Alignment.center,
               radius: scaleAnimation.value,
               colors: [
-                widget.textColor.withValues(alpha: 0.1),
+                Colors.white.withValues(alpha: 0.1),
                 Colors.transparent,
               ],
             ),
@@ -178,7 +178,7 @@ class _CutinEffectState extends State<CutinEffect>
           child: CustomPaint(
             painter: LightRayPainter(
               progress: fadeAnimation.value,
-              color: widget.textColor,
+              color: Colors.white,
             ),
           ),
         );
