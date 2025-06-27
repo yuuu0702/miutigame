@@ -154,7 +154,23 @@ class _FreezeEffectState extends State<FreezeEffect>
                               ),
                             ],
                           ),
-                          child: Container(),
+                          child: Center(
+                            child: Text(
+                              'フリーズ！',
+                              style: TextStyle(
+                                color: Colors.lightBlue,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black,
+                                    offset: Offset(2, 2),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       );
                     },

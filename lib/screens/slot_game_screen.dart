@@ -14,6 +14,11 @@ import '../widgets/god_cutin_effect.dart';
 import '../widgets/pre_effect_widget.dart';
 import '../widgets/reel_flash_effect.dart';
 import '../widgets/freeze_effect.dart';
+import '../widgets/lightning_effect.dart';
+import '../widgets/aura_effect.dart';
+import '../widgets/notice_effect.dart';
+import '../widgets/reel_glow_effect.dart';
+import '../widgets/symbol_shine_effect.dart';
 import '../models/slot_result.dart';
 import '../services/internal_lottery_service.dart';
 
@@ -47,6 +52,11 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   bool showPreEffect = false;
   bool showReelFlash = false;
   bool showFreeze = false;
+  bool showLightning = false;
+  bool showAura = false;
+  bool showNotice = false;
+  NoticeLevel currentNoticeLevel = NoticeLevel.weak;
+  List<int> glowingReels = [];
   SlotResult? internalResult;
 
   @override
@@ -82,10 +92,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       final animation = Tween<double>(
         begin: 0.0,
         end: 1.0,
-      ).animate(CurvedAnimation(
-        parent: controller, 
-        curve: Curves.easeOut,
-      ));
+      ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
 
       reelControllers.add(controller);
       reelAnimations.add(animation);
@@ -129,7 +136,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
     setState(() {
       gameState = gameState.copyWith(
         credits: gameState.credits - gameState.bet,
-        message: 'スピン中...',
+        message: '',
         isSpinning: [true, true, true],
         showExplosion: false,
         isGodMode: false,
@@ -185,7 +192,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       _triggerReachEffect();
     } else {
       setState(() {
-        gameState = gameState.copyWith(message: 'ハズレ... もう一度！');
+        gameState = gameState.copyWith(message: '');
       });
     }
   }
@@ -195,25 +202,43 @@ class _SlotGameScreenState extends State<SlotGameScreen>
     setState(() {
       showGodCutin = true;
       cutinImagePath = AppConstants.godSymbol;
+      gameState = gameState.copyWith(isCutinActive: true);
     });
+
+    // 3番目のリールのアニメーションを継続
+    reelControllers[2].repeat();
 
     // カットイン演出完了後にGODモード開始
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
           showGodCutin = false;
-          gameState = gameState.copyWith(
-            isGodMode: true,
-            credits:
-                gameState.credits +
-                (gameState.bet * AppConstants.godMultiplier),
-            message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
-            showExplosion: true,
-          );
+          gameState = gameState.copyWith(message: 'リール調整中...');
         });
 
-        explosionController!.forward();
-        godEffectController!.repeat();
+        // カットイン終了後、少し回転させてから停止
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            setState(() {
+              gameState = gameState.copyWith(
+                isGodMode: true,
+                credits:
+                    gameState.credits +
+                    (gameState.bet * AppConstants.godMultiplier),
+                message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
+                showExplosion: true,
+                isCutinActive: false,
+              );
+            });
+
+            // 3番目のリールを停止
+            reelControllers[2].stop();
+            reelControllers[2].reset();
+
+            explosionController!.forward();
+            godEffectController!.repeat();
+          }
+        });
 
         Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
@@ -244,14 +269,31 @@ class _SlotGameScreenState extends State<SlotGameScreen>
     setState(() {
       showCutin = true;
       cutinImagePath = cutinImage;
+      gameState = gameState.copyWith(isCutinActive: true);
     });
+
+    // 3番目のリールのアニメーションを継続
+    reelControllers[2].repeat();
 
     // カットイン終了後にメッセージ更新
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
           showCutin = false;
-          gameState = gameState.copyWith(message: 'GODリーチ！惜しい！次に期待！');
+          gameState = gameState.copyWith(message: 'リール調整中...');
+        });
+
+        // カットイン終了後、少し回転させてから停止
+        Future.delayed(const Duration(milliseconds: 1500), () {
+          if (mounted) {
+            setState(() {
+              gameState = gameState.copyWith(message: '', isCutinActive: false);
+            });
+
+            // 3番目のリールを停止
+            reelControllers[2].stop();
+            reelControllers[2].reset();
+          }
         });
 
         // リール振動エフェクト
@@ -290,18 +332,14 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   }
 
   void _startAutoMode() {
-    print('_startAutoMode called - isAutoMode: ${gameState.isAutoMode}, credits: ${gameState.credits}, bet: ${gameState.bet}');
-    
     if (gameState.isAutoMode || gameState.credits < gameState.bet) {
-      print('Auto mode already active or insufficient credits');
       return;
     }
 
     setState(() {
       gameState = gameState.copyWith(isAutoMode: true);
     });
-    
-    print('Auto mode started - isAutoMode: ${gameState.isAutoMode}');
+
     _scheduleNextAutoSpin();
   }
 
@@ -317,21 +355,14 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   }
 
   void _scheduleNextAutoSpin() {
-    print('_scheduleNextAutoSpin called - isAutoMode: ${gameState.isAutoMode}');
-    
     if (!gameState.isAutoMode || gameState.credits < gameState.bet) {
-      print('Stopping auto mode - isAutoMode: ${gameState.isAutoMode}, credits: ${gameState.credits}');
       _stopAutoMode();
       return;
     }
 
-    print('Scheduling next auto spin in 2 seconds');
     autoTimer = Timer(const Duration(milliseconds: 2000), () {
       if (mounted && gameState.isAutoMode) {
-        print('Executing auto spin');
         _performInternalLotterySpin();
-      } else {
-        print('Skipping auto spin - mounted: $mounted, isAutoMode: ${gameState.isAutoMode}');
       }
     });
   }
@@ -361,7 +392,47 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   Future<void> _showPreEffects() async {
     if (internalResult == null) return;
 
-    // 激アツ予告の表示
+    // 予告演出の表示
+    if (internalResult!.noticeType != NoticeType.none) {
+      setState(() {
+        showNotice = true;
+        currentNoticeLevel = _convertNoticeType(internalResult!.noticeType);
+      });
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      setState(() {
+        showNotice = false;
+      });
+    }
+
+    // 稲妻演出
+    if (internalResult!.hasLightning) {
+      setState(() {
+        showLightning = true;
+      });
+
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      setState(() {
+        showLightning = false;
+      });
+    }
+
+    // オーラ演出
+    if (internalResult!.hasAura) {
+      setState(() {
+        showAura = true;
+      });
+
+      await Future.delayed(const Duration(seconds: 2));
+
+      setState(() {
+        showAura = false;
+      });
+    }
+
+    // 激アツ予告の表示（従来の）
     if (internalResult!.shouldShowPreEffect) {
       setState(() {
         showPreEffect = true;
@@ -388,11 +459,21 @@ class _SlotGameScreenState extends State<SlotGameScreen>
     }
   }
 
+  NoticeLevel _convertNoticeType(NoticeType type) {
+    switch (type) {
+      case NoticeType.weak: return NoticeLevel.weak;
+      case NoticeType.medium: return NoticeLevel.medium;
+      case NoticeType.strong: return NoticeLevel.strong;
+      case NoticeType.super_: return NoticeLevel.super_;
+      case NoticeType.none: return NoticeLevel.weak;
+    }
+  }
+
   Future<void> _executeSpinWithResult() async {
     setState(() {
       gameState = gameState.copyWith(
         credits: gameState.credits - gameState.bet,
-        message: 'スピン中...',
+        message: '',
         isSpinning: [true, true, true],
         showExplosion: false,
         isGodMode: false,
@@ -404,7 +485,9 @@ class _SlotGameScreenState extends State<SlotGameScreen>
     if (internalResult!.isWin) {
       if (internalResult!.resultType == SlotResultType.god) {
         // GOD揃いの位置を設定
-        final godIndex = AppConstants.slotSymbols.indexOf(AppConstants.godSymbol);
+        final godIndex = AppConstants.slotSymbols.indexOf(
+          AppConstants.godSymbol,
+        );
         targetPositions = [godIndex, godIndex, godIndex];
       } else {
         // 通常当たりの位置を設定
@@ -416,10 +499,16 @@ class _SlotGameScreenState extends State<SlotGameScreen>
     } else if (internalResult!.shouldShowReach) {
       // リーチ演出: GODリーチを作る
       final godIndex = AppConstants.slotSymbols.indexOf(AppConstants.godSymbol);
-      targetPositions = [godIndex, godIndex, (godIndex + 1) % AppConstants.slotSymbols.length];
+      targetPositions = [
+        godIndex,
+        godIndex,
+        (godIndex + 1) % AppConstants.slotSymbols.length,
+      ];
     } else {
       // ハズレ
-      targetPositions = SlotGameService.generateRandomPositions(gameState.reels);
+      targetPositions = SlotGameService.generateRandomPositions(
+        gameState.reels,
+      );
     }
 
     // リールアニメーション実行
@@ -455,6 +544,13 @@ class _SlotGameScreenState extends State<SlotGameScreen>
           setState(() {
             gameState = gameState.copyWith(message: 'GODリーチ！！！');
           });
+          
+          // リール光演出を開始
+          if (internalResult!.hasReelGlow) {
+            setState(() {
+              glowingReels = internalResult!.glowingReels;
+            });
+          }
         }
 
         if (i == 2) {
@@ -504,22 +600,42 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       setState(() {
         showGodCutin = true;
         cutinImagePath = internalResult!.cutinImagePath;
+        gameState = gameState.copyWith(isCutinActive: true);
       });
+
+      // 3番目のリールのアニメーションを継続
+      reelControllers[2].repeat();
 
       Future.delayed(const Duration(seconds: 4), () {
         if (mounted) {
           setState(() {
             showGodCutin = false;
-            gameState = gameState.copyWith(
-              isGodMode: true,
-              credits: gameState.credits + (gameState.bet * AppConstants.godMultiplier),
-              message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
-              showExplosion: true,
-            );
+            gameState = gameState.copyWith(message: 'リール調整中...');
           });
-          
-          explosionController!.forward();
-          godEffectController!.repeat();
+
+          // カットイン終了後、少し回転させてから停止
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              setState(() {
+                gameState = gameState.copyWith(
+                  isGodMode: true,
+                  credits:
+                      gameState.credits +
+                      (gameState.bet * AppConstants.godMultiplier),
+                  message: '🎉 GOD降臨！！！ ${AppConstants.godMultiplier}倍獲得！！！ 🎉',
+                  showExplosion: true,
+                  isCutinActive: false,
+                );
+              });
+
+              // 3番目のリールを停止
+              reelControllers[2].stop();
+              reelControllers[2].reset();
+
+              explosionController!.forward();
+              godEffectController!.repeat();
+            }
+          });
 
           Future.delayed(const Duration(seconds: 5), () {
             if (mounted) {
@@ -546,24 +662,39 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       setState(() {
         showCutin = true;
         cutinImagePath = internalResult!.cutinImagePath;
+        gameState = gameState.copyWith(isCutinActive: true);
       });
+
+      // 3番目のリールのアニメーションを継続
+      reelControllers[2].repeat();
 
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           setState(() {
             showCutin = false;
+            gameState = gameState.copyWith(message: 'リール調整中...');
           });
-          
-          final multiplier = internalResult!.multiplier;
-          final win = (gameState.bet * multiplier).toInt();
-          setState(() {
-            gameState = gameState.copyWith(
-              credits: gameState.credits + win,
-              message: '当たり！ $win枚獲得！',
-            );
+
+          // カットイン終了後、少し回転させてから停止
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              // 3番目のリールを停止
+              reelControllers[2].stop();
+              reelControllers[2].reset();
+
+              final multiplier = internalResult!.multiplier;
+              final win = (gameState.bet * multiplier).toInt();
+              setState(() {
+                gameState = gameState.copyWith(
+                  credits: gameState.credits + win,
+                  message: '当たり！ $win枚獲得！',
+                  isCutinActive: false,
+                );
+              });
+              _triggerWinEffect();
+              _resumeAutoIfNeeded();
+            }
           });
-          _triggerWinEffect();
-          _resumeAutoIfNeeded();
         }
       });
     } else {
@@ -585,13 +716,33 @@ class _SlotGameScreenState extends State<SlotGameScreen>
       setState(() {
         showCutin = true;
         cutinImagePath = internalResult!.cutinImagePath;
+        gameState = gameState.copyWith(isCutinActive: true);
       });
+
+      // 3番目のリールのアニメーションを継続
+      reelControllers[2].repeat();
 
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           setState(() {
             showCutin = false;
-            gameState = gameState.copyWith(message: 'GODリーチ！惜しい！次に期待！');
+            gameState = gameState.copyWith(message: 'リール調整中...');
+          });
+
+          // カットイン終了後、少し回転させてから停止
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              setState(() {
+                gameState = gameState.copyWith(
+                  message: 'GODリーチ！惜しい！次に期待！',
+                  isCutinActive: false,
+                );
+              });
+
+              // 3番目のリールを停止
+              reelControllers[2].stop();
+              reelControllers[2].reset();
+            }
           });
 
           for (int i = 0; i < 3; i++) {
@@ -644,7 +795,10 @@ class _SlotGameScreenState extends State<SlotGameScreen>
                   onAutoStart: _startAutoMode,
                   onAutoStop: _stopAutoMode,
                   isAutoMode: gameState.isAutoMode,
-                  canSpin: !gameState.isSpinning.any((s) => s) && gameState.credits >= gameState.bet && !gameState.isAutoMode,
+                  canSpin:
+                      !gameState.isSpinning.any((s) => s) &&
+                      gameState.credits >= gameState.bet &&
+                      !gameState.isAutoMode,
                 ),
               ],
             ),
@@ -695,6 +849,38 @@ class _SlotGameScreenState extends State<SlotGameScreen>
                   });
                 },
               ),
+            // 新しい演出エフェクト
+            if (showLightning)
+              LightningEffect(
+                onComplete: () {
+                  setState(() {
+                    showLightning = false;
+                  });
+                },
+              ),
+            if (showAura)
+              AuraEffect(
+                color: Colors.purple,
+                onComplete: () {
+                  setState(() {
+                    showAura = false;
+                  });
+                },
+              ),
+            if (showNotice)
+              NoticeEffect(
+                level: currentNoticeLevel,
+                onComplete: () {
+                  setState(() {
+                    showNotice = false;
+                  });
+                },
+              ),
+            // リール光演出
+            ...glowingReels.map((reelIndex) => ReelGlowEffect(
+                  reelIndex: reelIndex,
+                  glowColor: Colors.yellow,
+                )),
           ],
         ),
       ),

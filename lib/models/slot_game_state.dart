@@ -20,6 +20,7 @@ class SlotGameState {
   final bool showReelFlash;
   final SlotResult? currentResult;
   final bool hasInternalResult; // 内部抽選結果があるかどうか
+  final bool isCutinActive; // カットイン演出中かどうか
   
   const SlotGameState({
     required this.reels,
@@ -37,6 +38,7 @@ class SlotGameState {
     this.showReelFlash = false,
     this.currentResult,
     this.hasInternalResult = false,
+    this.isCutinActive = false,
   });
   
   SlotGameState copyWith({
@@ -55,6 +57,7 @@ class SlotGameState {
     bool? showReelFlash,
     SlotResult? currentResult,
     bool? hasInternalResult,
+    bool? isCutinActive,
   }) {
     return SlotGameState(
       reels: reels ?? this.reels,
@@ -72,6 +75,7 @@ class SlotGameState {
       showReelFlash: showReelFlash ?? this.showReelFlash,
       currentResult: currentResult ?? this.currentResult,
       hasInternalResult: hasInternalResult ?? this.hasInternalResult,
+      isCutinActive: isCutinActive ?? this.isCutinActive,
     );
   }
 }

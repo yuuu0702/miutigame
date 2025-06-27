@@ -15,6 +15,14 @@ enum EffectType {
   godMode,
 }
 
+enum NoticeType {
+  none,
+  weak,      // 弱予告
+  medium,    // 中予告  
+  strong,    // 強予告
+  super_,    // 激アツ予告
+}
+
 class SlotResult {
   final SlotResultType resultType;
   final List<String> symbols;
@@ -25,6 +33,11 @@ class SlotResult {
   final int? symbolIndex;
   final double multiplier;
   final String? cutinImagePath;
+  final NoticeType noticeType;
+  final bool hasLightning;
+  final bool hasAura;
+  final bool hasReelGlow;
+  final List<int> glowingReels;
   
   const SlotResult({
     required this.resultType,
@@ -36,6 +49,11 @@ class SlotResult {
     this.symbolIndex,
     this.multiplier = 1.0,
     this.cutinImagePath,
+    this.noticeType = NoticeType.none,
+    this.hasLightning = false,
+    this.hasAura = false,
+    this.hasReelGlow = false,
+    this.glowingReels = const [],
   });
 
   bool get isWin => resultType != SlotResultType.hazure && resultType != SlotResultType.reach;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppConstants {
-  static const String appTitle = 'ミウチゲーム';
+  static const String appTitle = 'OguraGames';
 
   static const List<String> imageAssets = [
     'assets/095dc733ec8058b707b700f23774ec9d.png',
@@ -51,7 +51,7 @@ class AppConstants {
   // カットイン用の画像
   static const List<String> cutinImages = [
     'assets/nao11.jpg',
-    'assets/nao12.jpg', 
+    'assets/nao12.jpg',
     'assets/nao7.png',
     'assets/saginaoki.jpg',
   ];

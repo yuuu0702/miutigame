@@ -118,7 +118,23 @@ class _PreEffectWidgetState extends State<PreEffectWidget>
                           ),
                         ],
                       ),
-                      child: Container(),
+                      child: Center(
+                        child: Text(
+                          '激アツ予告！',
+                          style: TextStyle(
+                            color: Colors.yellow,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(2, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 },

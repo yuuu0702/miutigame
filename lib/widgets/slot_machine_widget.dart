@@ -62,26 +62,32 @@ class SlotMachineWidget extends StatelessWidget {
       width: 80,
       height: 240, // 3つの図柄を表示するために高さを拡大
       decoration: BoxDecoration(
-        color: Colors.black,
+        color: Colors.grey[900], // より自然な背景色
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.gold, width: 2),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: AnimatedBuilder(
+        child: OverflowBox(
+          maxHeight: double.infinity,
+          child: AnimatedBuilder(
           animation: reelAnimations[reelIndex],
           builder: (context, child) {
             return Transform.translate(
               offset: Offset(
                 0,
-                gameState.isSpinning[reelIndex]
-                    ? -reelAnimations[reelIndex].value *
-                          2000 // 上から下へより高速回転
+                (gameState.isSpinning[reelIndex] ||
+                        (gameState.isCutinActive && reelIndex == 2))
+                    ? (reelAnimations[reelIndex].value *
+                          (gameState.isCutinActive && reelIndex == 2
+                              ? 500 // カットイン中の3番目リールはゆっくり回転
+                              : 2000)) // 通常は高速回転
                     : 0,
               ),
               child: Column(children: _buildReelSymbols(reelIndex)),
             );
           },
+          ),
         ),
       ),
     );
@@ -92,11 +98,13 @@ class SlotMachineWidget extends StatelessWidget {
     final currentPos = gameState.currentPositions[reelIndex];
     List<Widget> symbolWidgets = [];
 
-    // スピン中は複数の図柄を高速で表示
-    if (gameState.isSpinning[reelIndex]) {
-      for (int i = 0; i < 10; i++) {
-        // 10個の図柄を循環表示
-        final symbolIndex = (currentPos + i) % symbols.length;
+    // スピン中またはカットイン中の3番目リールは複数の図柄を表示
+    if (gameState.isSpinning[reelIndex] ||
+        (gameState.isCutinActive && reelIndex == 2)) {
+      // 画面全体をカバーするのに十分な図柄数を計算
+      int symbolsNeeded = (240 / 84).ceil() + 50; // リール高さ240px ÷ シンボル高さ84px + 余裕
+      for (int i = -25; i < symbolsNeeded; i++) {
+        final symbolIndex = (i + symbols.length * 100) % symbols.length;
         symbolWidgets.add(_buildSymbolWidget(symbols[symbolIndex], false));
       }
     } else {
@@ -119,6 +127,7 @@ class SlotMachineWidget extends StatelessWidget {
       height: 80,
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
+        color: Colors.grey[800], // 背景色を追加
         borderRadius: BorderRadius.circular(6),
         border: isCenter && isGodSymbol
             ? Border.all(color: AppColors.gold, width: 3)
