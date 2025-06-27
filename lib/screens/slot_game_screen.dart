@@ -461,11 +461,16 @@ class _SlotGameScreenState extends State<SlotGameScreen>
 
   NoticeLevel _convertNoticeType(NoticeType type) {
     switch (type) {
-      case NoticeType.weak: return NoticeLevel.weak;
-      case NoticeType.medium: return NoticeLevel.medium;
-      case NoticeType.strong: return NoticeLevel.strong;
-      case NoticeType.super_: return NoticeLevel.super_;
-      case NoticeType.none: return NoticeLevel.weak;
+      case NoticeType.weak:
+        return NoticeLevel.weak;
+      case NoticeType.medium:
+        return NoticeLevel.medium;
+      case NoticeType.strong:
+        return NoticeLevel.strong;
+      case NoticeType.super_:
+        return NoticeLevel.super_;
+      case NoticeType.none:
+        return NoticeLevel.weak;
     }
   }
 
@@ -544,7 +549,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
           setState(() {
             gameState = gameState.copyWith(message: 'GODリーチ！！！');
           });
-          
+
           // リール光演出を開始
           if (internalResult!.hasReelGlow) {
             setState(() {
@@ -767,7 +772,7 @@ class _SlotGameScreenState extends State<SlotGameScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GODスロット'),
+        title: const Text('なおスロット'),
         backgroundColor: Colors.black87,
         foregroundColor: Colors.white,
       ),
@@ -877,10 +882,12 @@ class _SlotGameScreenState extends State<SlotGameScreen>
                 },
               ),
             // リール光演出
-            ...glowingReels.map((reelIndex) => ReelGlowEffect(
-                  reelIndex: reelIndex,
-                  glowColor: Colors.yellow,
-                )),
+            ...glowingReels.map(
+              (reelIndex) => ReelGlowEffect(
+                reelIndex: reelIndex,
+                glowColor: Colors.yellow,
+              ),
+            ),
           ],
         ),
       ),
